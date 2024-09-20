@@ -1,0 +1,191 @@
+import React, { useState, useRef, useLayoutEffect } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import MedicalDetails from './MedicalDetails';
+
+gsap.registerPlugin(ScrollTrigger);
+
+const LoginSignup = () => {
+  const [isSignup, setIsSignup] = useState(false);
+  const [showEmergencyFields, setShowEmergencyFields] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    emergencyContact: '',
+    insuranceInfo: '',
+    medicalHistory: '',
+    signature: ''
+  });
+  const [fileData, setFileData] = useState({
+    insuranceCard: null,
+    medicalRecords: null,
+    consentForm: null,
+    signature: null,
+    governmentId: null
+  });
+  const formRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(formRef.current, {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        ease: 'power3.out'
+      });
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [id]: value
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const { id, files } = e.target;
+    setFileData(prevState => ({
+      ...prevState,
+      [id]: files[0]
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = new FormData();
+    Object.keys(formData).forEach(key => form.append(key, formData[key]));
+    Object.keys(fileData).forEach(key => {
+      if (fileData[key]) {
+        form.append(key, fileData[key]);
+      }
+    });
+
+    try {
+      const baseURL = 'http://localhost:5000'; // Adjust according to your backend URL
+      const endpoint = isSignup ? `${baseURL}/api/signup` : `${baseURL}/api/login`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: form,
+      });
+
+      if (response.ok) {
+        if (isSignup) {
+          alert('User signed up successfully!');
+        } else {
+          const { token } = await response.json();
+          localStorage.setItem('jwtToken', token);
+          alert('Login successful!');
+        }
+      } else {
+        alert(isSignup ? 'Error signing up.' : 'Invalid credentials.');
+      }
+    } catch (error) {
+      alert('Network error.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white flex items-center justify-center">
+      <div
+        ref={formRef}
+        className={`bg-white p-8 rounded-lg shadow-lg w-full ${
+          showEmergencyFields ? 'max-w-screen-lg' : 'max-w-screen-sm'
+        } transition-all duration-300 ease-in-out`}
+      >
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+          {isSignup ? 'Sign Up' : 'Login'}
+        </h2>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {isSignup && (
+            <div>
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="prefill-emergency"
+                  checked={showEmergencyFields}
+                  onChange={() => setShowEmergencyFields(!showEmergencyFields)}
+                  className="mr-2"
+                />
+                <label htmlFor="prefill-emergency" className="text-gray-600">
+                  Prefill emergency details
+                </label>
+              </div>
+              {showEmergencyFields && (
+                <MedicalDetails
+                  handleInputChange={handleInputChange}
+                  handleFileChange={handleFileChange}
+                />
+              )}
+            </div>
+          )}
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-gray-600">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Enter your email"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-gray-600">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter your password"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {isSignup && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-gray-600">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm your password"
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+          >
+            {isSignup ? 'Sign Up' : 'Login'}
+          </button>
+        </form>
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setIsSignup(!isSignup)}
+            className="text-blue-600 hover:text-blue-700 transition duration-300"
+          >
+            {isSignup ? 'Already have an account? Login' : 'Need an account? Sign Up'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginSignup;

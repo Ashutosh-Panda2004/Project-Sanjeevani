@@ -1,0 +1,66 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto'); // Import crypto for encryption
+
+const router = express.Router();
+
+const UPLOADS_FOLDER = path.join(__dirname, 'public/uploads');
+const ENCRYPTED_FOLDER = path.join(__dirname, 'public/encrypted');
+
+// Ensure directories exist
+if (!fs.existsSync(UPLOADS_FOLDER)) {
+  fs.mkdirSync(UPLOADS_FOLDER, { recursive: true });
+}
+if (!fs.existsSync(ENCRYPTED_FOLDER)) {
+  fs.mkdirSync(ENCRYPTED_FOLDER, { recursive: true });
+}
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_FOLDER);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+// Helper function for encryption
+const encryptFile = (filePath, encryptedPath, callback) => {
+  const cipher = crypto.createCipher('aes-256-cbc', 'encryption_key');
+  const input = fs.createReadStream(filePath);
+  const output = fs.createWriteStream(encryptedPath);
+
+  input.pipe(cipher).pipe(output);
+
+  output.on('finish', () => callback(null));
+  output.on('error', (err) => callback(err));
+};
+
+// Route to handle file uploads
+router.post('/upload', upload.any(), (req, res) => {
+  try {
+    const files = req.files;
+    files.forEach(file => {
+      const filePath = path.join(UPLOADS_FOLDER, file.filename);
+      const encryptedPath = path.join(ENCRYPTED_FOLDER, file.filename);
+
+      encryptFile(filePath, encryptedPath, (err) => {
+        if (err) {
+          console.error('Error encrypting file:', err);
+        }
+      });
+    });
+
+    res.status(200).json({ message: 'Files uploaded and encrypted successfully', files });
+  } catch (err) {
+    console.error('Error uploading files:', err);
+    res.status(500).json({ message: 'Error uploading files' });
+  }
+});
+
+module.exports = router;

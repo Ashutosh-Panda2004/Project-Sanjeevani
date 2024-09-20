@@ -1,0 +1,188 @@
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
+const multer = require('multer');
+const crypto = require('crypto'); // Import crypto for encryption
+
+const app = express();
+
+const SECRET_KEY = '1c8cd4ec6e0a94ca79321f77b5e5b3188bd383150d0a9aba5220d10622dadb40effb2ed524d4327805c36e897569fcb1536f615566d2f4ead3a8877031fd1403'; // Replace with your secure secret key
+const USERS_FILE_PATH = path.join(__dirname, 'data', 'users.json');
+const UPLOADS_FOLDER = path.join(__dirname, 'public', 'uploads');
+const ENCRYPTED_FOLDER = path.join(__dirname, 'public', 'encrypted');
+
+// Ensure the uploads and encrypted folders exist
+if (!fs.existsSync(UPLOADS_FOLDER)) {
+  fs.mkdirSync(UPLOADS_FOLDER, { recursive: true });
+}
+if (!fs.existsSync(ENCRYPTED_FOLDER)) {
+  fs.mkdirSync(ENCRYPTED_FOLDER, { recursive: true });
+}
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_FOLDER); // Unencrypted files will be stored here
+  },
+  filename: (req, file, cb) => {
+    const userEmail = req.body.email; // Assumes the user's email is sent in form data
+    const docName = file.originalname;
+    const fileName = `${userEmail}-${docName}`;
+    cb(null, fileName); // Save as 'user-email-docname'
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Helper function to encrypt files
+const encryptFile = (filePath, encryptedPath, callback) => {
+  const cipher = crypto.createCipher('aes-256-cbc', 'encryption_key'); // Replace 'encryption_key' with your key
+  const input = fs.createReadStream(filePath);
+  const output = fs.createWriteStream(encryptedPath);
+
+  input.pipe(cipher).pipe(output);
+
+  output.on('finish', () => callback(null));
+  output.on('error', (err) => callback(err));
+};
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors()); // Enable CORS for all origins
+
+// API route to get user data
+app.get('/api/users', (req, res) => {
+  fs.readFile(USERS_FILE_PATH, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to read file' });
+    }
+    res.json(JSON.parse(data));
+  });
+});
+
+// API route to post user data (signup)
+app.post('/api/signup', upload.fields([
+  { name: 'insuranceCard' },
+  { name: 'medicalRecords' },
+  { name: 'consentForm' },
+  { name: 'signature' },
+  { name: 'governmentId' }
+]), async (req, res) => {
+  const { email, password, confirmPassword, ...rest } = req.body;
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ error: 'Passwords do not match' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Read existing users
+    fs.readFile(USERS_FILE_PATH, 'utf8', (err, data) => {
+      if (err) {
+        return res.status(500).json({ error: 'Unable to read file' });
+      }
+
+      let users = [];
+      if (data) {
+        users = JSON.parse(data);
+      }
+
+      // Check if email already exists
+      const existingUser = users.find(user => user.email === email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email is already in use' });
+      }
+
+      // Create new user and save uploaded files
+      const newUser = {
+        email,
+        password: hashedPassword,
+        ...rest,
+        files: req.files
+      };
+
+      users.push(newUser);
+
+      // Write updated users to file
+      fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Unable to save user data' });
+        }
+
+        // Encrypt files and store in 'encrypted' folder
+        const files = req.files;
+        for (const field in files) {
+          files[field].forEach((file) => {
+            const unencryptedPath = path.join(UPLOADS_FOLDER, file.filename);
+            const encryptedPath = path.join(ENCRYPTED_FOLDER, file.filename);
+
+            encryptFile(unencryptedPath, encryptedPath, (err) => {
+              if (err) {
+                console.error('Error encrypting file:', err);
+              }
+            });
+          });
+        }
+
+        res.status(201).json({ message: 'User data saved and files encrypted successfully' });
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error saving user data' });
+  }
+});
+
+// API route to authenticate user and provide JWT (login)
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  fs.readFile(USERS_FILE_PATH, 'utf8', async (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to read file' });
+    }
+
+    const users = JSON.parse(data);
+    const user = users.find(user => user.email === email);
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ email: user.email }, SECRET_KEY, { expiresIn: '1h' });
+    res.json({ token });
+  });
+});
+
+// API route to upload files
+app.post('/api/upload', upload.fields([
+  { name: 'document' }
+]), (req, res) => {
+  if (!req.files) {
+    return res.status(400).json({ error: 'No files uploaded' });
+  }
+
+  // Encrypt the uploaded files
+  const files = req.files['document'];
+  files.forEach(file => {
+    const filePath = path.join(UPLOADS_FOLDER, file.filename);
+    const encryptedPath = path.join(ENCRYPTED_FOLDER, file.filename);
+
+    encryptFile(filePath, encryptedPath, (err) => {
+      if (err) {
+        console.error('Error encrypting file:', err);
+      }
+    });
+  });
+
+  res.status(201).json({ message: 'Files uploaded and encrypted successfully', files: req.files });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

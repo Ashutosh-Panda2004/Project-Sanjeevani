@@ -1,0 +1,85 @@
+[
+  {
+    "email": "ejemplo@ejemplo.mx",
+    "password": "$2a$10$vkbv3mv3y9d5ACSNDdMysumps6KeLRXTE03Aw236hzWIjkrsFohmC",
+    "fullName": "Jon Stewart Doe",
+    "address": "1600 Fake Street",
+    "phoneNumber": "6019521325",
+    "dob": "2004-08-10",
+    "gender": "male",
+    "emergencyContactName": "Juan Francisco García Flores",
+    "emergencyContactPhone": "5553428400",
+    "emergencyContactRelationship": "son",
+    "natureOfEmergency": "high fever",
+    "symptoms": "pain in chest, fever",
+    "currentMedications": "none ",
+    "allergies": "none",
+    "medicalConditions": "none",
+    "consentSignature": "john",
+    "consentDate": "2004-08-10",
+    "insuranceProvider": "lic",
+    "policyNumber": "3452345324",
+    "files": {
+      "insuranceCard": [
+        {
+          "fieldname": "insuranceCard",
+          "originalname": "64c79c06228e13139bdc6cb7.pdf",
+          "encoding": "7bit",
+          "mimetype": "application/pdf",
+          "destination": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads",
+          "filename": "ejemplo@ejemplo.mx_64c79c06228e13139bdc6cb7.pdf",
+          "path": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads\\ejemplo@ejemplo.mx_64c79c06228e13139bdc6cb7.pdf",
+          "size": 41085330
+        }
+      ],
+      "medicalRecords": [
+        {
+          "fieldname": "medicalRecords",
+          "originalname": "AntiraggingAffidavitForm.pdf",
+          "encoding": "7bit",
+          "mimetype": "application/pdf",
+          "destination": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads",
+          "filename": "ejemplo@ejemplo.mx_AntiraggingAffidavitForm.pdf",
+          "path": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads\\ejemplo@ejemplo.mx_AntiraggingAffidavitForm.pdf",
+          "size": 32234
+        }
+      ],
+      "consentForm": [
+        {
+          "fieldname": "consentForm",
+          "originalname": "Ashutosh Report.pdf",
+          "encoding": "7bit",
+          "mimetype": "application/pdf",
+          "destination": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads",
+          "filename": "ejemplo@ejemplo.mx_Ashutosh Report.pdf",
+          "path": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads\\ejemplo@ejemplo.mx_Ashutosh Report.pdf",
+          "size": 1545906
+        }
+      ],
+      "signature": [
+        {
+          "fieldname": "signature",
+          "originalname": "Ashutosh-resume1_annotated[1].pdf",
+          "encoding": "7bit",
+          "mimetype": "application/pdf",
+          "destination": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads",
+          "filename": "ejemplo@ejemplo.mx_Ashutosh-resume1_annotated[1].pdf",
+          "path": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads\\ejemplo@ejemplo.mx_Ashutosh-resume1_annotated[1].pdf",
+          "size": 71756
+        }
+      ],
+      "governmentId": [
+        {
+          "fieldname": "governmentId",
+          "originalname": "CHO-22CS026 BEE 24 july, 2024.pdf",
+          "encoding": "7bit",
+          "mimetype": "application/pdf",
+          "destination": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads",
+          "filename": "ejemplo@ejemplo.mx_CHO-22CS026 BEE 24 july, 2024.pdf",
+          "path": "C:\\LAPTOP_DATA\\Sanjeevani\\Sanjeevani_Project\\backend\\public\\uploads\\ejemplo@ejemplo.mx_CHO-22CS026 BEE 24 july, 2024.pdf",
+          "size": 330731
+        }
+      ]
+    }
+  }
+]
